@@ -39,80 +39,145 @@
     </style>
 </head>
 <body>
+
 <div class="container">
     <h1>آزمون دیکته کردی</h1>
+    
     <div id="level-selection">
         <p>برای شروع، سطح آزمون را انتخاب کنید:</p>
         <button id="easy-btn">آسان</button>
         <button id="medium-btn">متوسط</button>
         <button id="hard-btn">سخت</button>
     </div>
+
     <div id="test-area" style="display: none;">
         <p id="word-prompt"></p>
-        <div class="action-buttons"><button id="play-btn">🔊 پخش کلمه</button></div>
+        <div class="action-buttons">
+            <button id="play-btn">🔊 پخش کلمه</button>
+        </div>
         <input type="text" id="user-input" placeholder="املای کلمه را اینجا بنویسید..." autocomplete="off">
-        <div class="action-buttons"><button id="check-btn">بررسی پاسخ</button></div>
+        <div class="action-buttons">
+            <button id="check-btn">بررسی پاسخ</button>
+        </div>
         <div id="feedback"></div>
     </div>
+
     <div id="score-area" style="display: none;">
         <h2 id="final-score"></h2>
         <p>آفرین! آزمون را با موفقیت به پایان رساندید.</p>
         <button id="restart-btn">شروع مجدد آزمون</button>
     </div>
 </div>
+
 <script>
     const wordLists = {
         easy: { name: "آسان", words: ["دەرگا", "سەر", "کورد", "خوشک", "دڵ", "گوڵ", "بڕۆ", "داربڕ", "ئەسپ", "وڵات"] },
         medium: { name: "متوسط", words: ["ڕۆژ", "زۆر", "شێر", "ئێستا", "هاوڕێ", "پڕۆژە", "هەڤاڵ", "تەلەڤیزیۆن", "دوور", "کوردستان"] },
         hard: { name: "سخت", words: ["سەندوق", "تەناف", "نەزەر", "خوێندنگە", "ڕووناکبیر", "بەڕێوەبەرایەتی", "نیشتمانپەروەری", "سەربەخۆیی", "مافی مرۆڤ", "تەندروستی"] }
     };
-    const levelSelectionDiv = document.getElementById('level-selection'), testAreaDiv = document.getElementById('test-area'), scoreAreaDiv = document.getElementById('score-area');
-    const wordPrompt = document.getElementById('word-prompt'), userInput = document.getElementById('user-input'), feedback = document.getElementById('feedback'), finalScore = document.getElementById('final-score');
-    const playBtn = document.getElementById('play-btn'), checkBtn = document.getElementById('check-btn');
-    let currentWords = [], currentWordIndex = 0, score = 0;
+
+    // دریافت عناصر HTML
+    const levelSelectionDiv = document.getElementById('level-selection');
+    const testAreaDiv = document.getElementById('test-area');
+    const scoreAreaDiv = document.getElementById('score-area');
+    const wordPrompt = document.getElementById('word-prompt');
+    const userInput = document.getElementById('user-input');
+    const feedback = document.getElementById('feedback');
+    const finalScore = document.getElementById('final-score');
+    
+    // دریافت دکمه‌ها
+    const easyBtn = document.getElementById('easy-btn');
+    const mediumBtn = document.getElementById('medium-btn');
+    const hardBtn = document.getElementById('hard-btn');
+    const playBtn = document.getElementById('play-btn');
+    const checkBtn = document.getElementById('check-btn');
+    const restartBtn = document.getElementById('restart-btn');
+
+    // متغیرهای وضعیت آزمون
+    let currentWords = [];
+    let currentWordIndex = 0;
+    let score = 0;
+
     function speak(text) {
         try {
-            const audio = new Audio(`https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=ku`);
+            const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=ku`;
+            const audio = new Audio(audioUrl);
             audio.play();
-        } catch (error) { console.error("Audio Error:", error); alert("خطا در پخش صدا. از اتصال اینترنت مطمئن شوید."); }
+        } catch (error) {
+            console.error("Audio Error:", error);
+            alert("خطا در پخش صدا. لطفاً از اتصال اینترنت خود مطمئن شوید.");
+        }
     }
+
     function startTest(level) {
-        currentWords = wordLists[level].words; currentWordIndex = 0; score = 0;
-        levelSelectionDiv.style.display = 'none'; scoreAreaDiv.style.display = 'none'; testAreaDiv.style.display = 'block';
+        currentWords = wordLists[level].words;
+        currentWordIndex = 0;
+        score = 0;
+        levelSelectionDiv.style.display = 'none';
+        scoreAreaDiv.style.display = 'none';
+        testAreaDiv.style.display = 'block';
         showNextWord();
     }
+
     function showNextWord() {
         if (currentWordIndex < currentWords.length) {
             wordPrompt.textContent = `کلمه ${currentWordIndex + 1} از ${currentWords.length}`;
-            userInput.value = ''; feedback.textContent = ''; playBtn.disabled = false; checkBtn.disabled = false; userInput.focus();
-        } else { showFinalScore(); }
+            userInput.value = '';
+            feedback.textContent = '';
+            playBtn.disabled = false;
+            checkBtn.disabled = false;
+            userInput.focus();
+        } else {
+            showFinalScore();
+        }
     }
+
     function checkAnswer() {
         const userAnswer = userInput.value.trim();
         if (!userAnswer) return;
-        playBtn.disabled = true; checkBtn.disabled = true;
+
+        playBtn.disabled = true;
+        checkBtn.disabled = true;
+
         const correctAnswer = currentWords[currentWordIndex];
         if (userAnswer === correctAnswer) {
-            feedback.textContent = '✅ آفرین! درست بود.'; feedback.style.color = 'green'; score++;
+            feedback.textContent = '✅ آفرین! درست بود.';
+            feedback.style.color = 'green';
+            score++;
         } else {
-            feedback.textContent = `❌ اشتباه بود. صحیح: ${correctAnswer}`; feedback.style.color = 'red';
+            feedback.textContent = `❌ اشتباه بود. صحیح: ${correctAnswer}`;
+            feedback.style.color = 'red';
         }
         currentWordIndex++;
         setTimeout(showNextWord, 2000);
     }
+
     function showFinalScore() {
-        testAreaDiv.style.display = 'none'; scoreAreaDiv.style.display = 'block';
+        testAreaDiv.style.display = 'none';
+        scoreAreaDiv.style.display = 'block';
         finalScore.textContent = `امتیاز شما: ${score} از ${currentWords.length}`;
     }
-    document.getElementById('easy-btn').addEventListener('click', () => startTest('easy'));
-    document.getElementById('medium-btn').addEventListener('click', () => startTest('medium'));
-    document.getElementById('hard-btn').addEventListener('click', () => startTest('hard'));
-    playBtn.addEventListener('click', () => { if(currentWordIndex < currentWords.length) speak(currentWords[currentWordIndex]); });
+
+    // اتصال رویدادها به دکمه‌ها
+    easyBtn.addEventListener('click', () => startTest('easy'));
+    mediumBtn.addEventListener('click', () => startTest('medium'));
+    hardBtn.addEventListener('click', () => startTest('hard'));
+    playBtn.addEventListener('click', () => {
+        if(currentWordIndex < currentWords.length) {
+            speak(currentWords[currentWordIndex]);
+        }
+    });
     checkBtn.addEventListener('click', checkAnswer);
-    userInput.addEventListener('keyup', (event) => { if (event.key === 'Enter') checkBtn.click(); });
-    document.getElementById('restart-btn').addEventListener('click', () => {
-        scoreAreaDiv.style.display = 'none'; levelSelectionDiv.style.display = 'block';
+    userInput.addEventListener('keyup', (event) => {
+        if (event.key === 'Enter') {
+            checkBtn.click();
+        }
+    });
+    restartBtn.addEventListener('click', () => {
+        scoreAreaDiv.style.display = 'none';
+        levelSelectionDiv.style.display = 'block';
     });
 </script>
+
 </body>
 </html>
