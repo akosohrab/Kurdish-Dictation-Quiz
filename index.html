@@ -16,40 +16,31 @@
         }
         h1 { color: #4a4a4a; margin-bottom: 20px; }
         p { color: #666; }
-        #level-selection button {
+        #level-selection button, .action-buttons button {
             background-color: #007bff; color: white; border: none; padding: 12px 20px;
-            margin: 5px; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s;
+            margin: 5px; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s, opacity 0.3s;
         }
         #level-selection button:hover { background-color: #0056b3; }
-        #test-area { margin-top: 20px; }
-        #word-prompt { font-size: 20px; font-weight: bold; margin-bottom: 15px; }
-        #user-input {
-            width: 80%; padding: 10px; font-size: 18px; border: 1px solid #ccc;
-            border-radius: 5px; text-align: center; direction: ltr;
-        }
-        .action-buttons button {
-            background-color: #28a745; color: white; padding: 10px 18px; margin: 10px 5px;
-            border: none; cursor: pointer; border-radius: 5px; font-size: 16px; transition: background-color 0.3s, opacity 0.3s;
-        }
         .action-buttons button:disabled { background-color: #6c757d; cursor: not-allowed; opacity: 0.6; }
         #check-btn { background-color: #17a2b8; }
-        #feedback { margin-top: 15px; font-size: 22px; font-weight: bold; height: 30px; }
-        #score-area { margin-top: 20px; font-size: 18px; }
         #restart-btn { background-color: #dc3545; }
+        #feedback { margin-top: 15px; font-size: 22px; font-weight: bold; height: 30px; }
+        #user-input {
+            width: 80%; padding: 10px; font-size: 18px; border: 1px solid #ccc;
+            border-radius: 5px; text-align: center; direction: ltr; margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
     <h1>آزمون دیکته کردی</h1>
-    
     <div id="level-selection">
         <p>برای شروع، سطح آزمون را انتخاب کنید:</p>
         <button id="easy-btn">آسان</button>
         <button id="medium-btn">متوسط</button>
         <button id="hard-btn">سخت</button>
     </div>
-
     <div id="test-area" style="display: none;">
         <p id="word-prompt"></p>
         <div class="action-buttons">
@@ -61,7 +52,6 @@
         </div>
         <div id="feedback"></div>
     </div>
-
     <div id="score-area" style="display: none;">
         <h2 id="final-score"></h2>
         <p>آفرین! آزمون را با موفقیت به پایان رساندید.</p>
@@ -84,8 +74,6 @@
     const userInput = document.getElementById('user-input');
     const feedback = document.getElementById('feedback');
     const finalScore = document.getElementById('final-score');
-    
-    // دریافت دکمه‌ها
     const easyBtn = document.getElementById('easy-btn');
     const mediumBtn = document.getElementById('medium-btn');
     const hardBtn = document.getElementById('hard-btn');
@@ -93,19 +81,39 @@
     const checkBtn = document.getElementById('check-btn');
     const restartBtn = document.getElementById('restart-btn');
 
-    // متغیرهای وضعیت آزمون
     let currentWords = [];
     let currentWordIndex = 0;
     let score = 0;
 
-    function speak(text) {
+    // **کد اصلاح شده برای پخش صدا**
+    async function speak(text) {
+        playBtn.disabled = true; // غیرفعال کردن دکمه هنگام دریافت صدا
         try {
-            const audioUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=ku`;
+            // برای دور زدن محدودیت‌های CORS، از یک پروکسی عمومی استفاده می‌کنیم
+            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=ku`;
+            
+            const response = await fetch(proxyUrl + ttsUrl);
+            
+            if (!response.ok) {
+                throw new Error(`خطای شبکه: ${response.statusText}`);
+            }
+            
+            const blob = await response.blob();
+            const audioUrl = URL.createObjectURL(blob);
             const audio = new Audio(audioUrl);
             audio.play();
+            
+            audio.onended = () => {
+                if(checkBtn.disabled === false) { // فقط اگر در مرحله پاسخ دادن هستیم، دکمه را فعال کن
+                   playBtn.disabled = false;
+                }
+            };
+
         } catch (error) {
-            console.error("Audio Error:", error);
-            alert("خطا در پخش صدا. لطفاً از اتصال اینترنت خود مطمئن شوید.");
+            console.error("خطا در دریافت یا پخش صدا:", error);
+            alert("خطایی در پخش صدا رخ داد. لطفاً چند لحظه بعد دوباره امتحان کنید. (ممکن است پروکسی موقتاً غیرفعال باشد)");
+            playBtn.disabled = false; // فعال کردن مجدد دکمه در صورت خطا
         }
     }
 
@@ -158,7 +166,7 @@
         finalScore.textContent = `امتیاز شما: ${score} از ${currentWords.length}`;
     }
 
-    // اتصال رویدادها به دکمه‌ها
+    // اتصال رویدادها
     easyBtn.addEventListener('click', () => startTest('easy'));
     mediumBtn.addEventListener('click', () => startTest('medium'));
     hardBtn.addEventListener('click', () => startTest('hard'));
