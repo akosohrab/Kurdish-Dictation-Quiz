@@ -66,7 +66,6 @@
         hard: { name: "سخت", words: ["سەندوق", "تەناف", "نەزەر", "خوێندنگە", "ڕووناکبیر", "بەڕێوەبەرایەتی", "نیشتمانپەروەری", "سەربەخۆیی", "مافی مرۆڤ", "تەندروستی"] }
     };
 
-    // دریافت عناصر HTML
     const levelSelectionDiv = document.getElementById('level-selection');
     const testAreaDiv = document.getElementById('test-area');
     const scoreAreaDiv = document.getElementById('score-area');
@@ -85,15 +84,18 @@
     let currentWordIndex = 0;
     let score = 0;
 
-    // **کد اصلاح شده برای پخش صدا**
+    // **کد نهایی و اصلاح شده برای پخش صدا با پروکسی قابل اعتماد**
     async function speak(text) {
-        playBtn.disabled = true; // غیرفعال کردن دکمه هنگام دریافت صدا
+        playBtn.disabled = true;
+        playBtn.textContent = 'در حال دریافت...'; // بازخورد بصری به کاربر
+        
         try {
-            // برای دور زدن محدودیت‌های CORS، از یک پروکسی عمومی استفاده می‌کنیم
-            const proxyUrl = 'https://cors-anywhere.herokuapp.com/';
+            // آدرس سرویس TTS گوگل
             const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&q=${encodeURIComponent(text)}&tl=ku`;
+            // استفاده از پروکسی قابل اعتماد allorigins.win برای دور زدن CORS
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(ttsUrl)}`;
             
-            const response = await fetch(proxyUrl + ttsUrl);
+            const response = await fetch(proxyUrl);
             
             if (!response.ok) {
                 throw new Error(`خطای شبکه: ${response.statusText}`);
@@ -104,16 +106,19 @@
             const audio = new Audio(audioUrl);
             audio.play();
             
+            // بازگرداندن دکمه به حالت اولیه پس از پایان پخش
             audio.onended = () => {
-                if(checkBtn.disabled === false) { // فقط اگر در مرحله پاسخ دادن هستیم، دکمه را فعال کن
+                if (checkBtn.disabled === false) { 
                    playBtn.disabled = false;
                 }
+                playBtn.textContent = '🔊 پخش کلمه';
             };
 
         } catch (error) {
             console.error("خطا در دریافت یا پخش صدا:", error);
-            alert("خطایی در پخش صدا رخ داد. لطفاً چند لحظه بعد دوباره امتحان کنید. (ممکن است پروکسی موقتاً غیرفعال باشد)");
+            alert("خطایی در پخش صدا رخ داد. لطفاً اتصال اینترنت خود را بررسی کرده و دوباره امتحان کنید.");
             playBtn.disabled = false; // فعال کردن مجدد دکمه در صورت خطا
+            playBtn.textContent = '🔊 پخش کلمه';
         }
     }
 
